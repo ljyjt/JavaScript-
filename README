@@ -1,4 +1,4 @@
-第一次克隆github的新仓库使用 git clone xxxx
+ 第一次克隆github的新仓库使用 git clone xxxx
 
 当有修改本地仓库时(.所有被修改或新增或删除的文件/或者文件名）
  git add .
