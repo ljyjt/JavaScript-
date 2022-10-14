@@ -1173,3 +1173,130 @@ let tensquared = (function(x) {return x*x;}(10));
   - 函数声明中的最后一个参数，多余的实参会以**数组**形式保存在剩余形参中
   - 剩余形参可以为空数组，但默认值永远不会为undefined
 
+## 4.函数作为值
+
+🌟函数不仅是**语法**，也是**值**
+
+```js
+function add(x,y) {return x+y;}
+function substract(x,y) {return x-y;}
+function multiple(x,y) {return x*y;}
+function divide(x,y) {return x/y;}
+
+//接收前面定义的任意一个函数作为参数，然后再用两个操作数调用它
+function operate(operator,operand1,operand2) {
+  return operator(operand1,operand2);
+}
+ 
+//计算(2+3)+(4*5)的值
+let i = operate(add,operate(add,2,3),operate(multiple,4,5));
+```
+
+```js
+//定义在对象字面量中
+const operators = {
+  add: (x,y) => x+y,
+  substract: (x,y) => x-y,
+  multiple: (x,y) => x*y,
+  divide: (x,y) => x/y,
+  pow: Math.pow
+};
+
+function operator2(operation,operand1,operand2) {
+  if(typeof operators[operantion] === 'function') {
+    return operators[operation](operand1,operand2);
+  }	
+  else throw "unknown operator"; 
+}
+
+operator2("add","hello",operate2("add"," ",world))// "hello world"
+operate2("pow",10,2)//100
+```
+
+- 函数是一个**特殊的对象**，也就意味着函数可以有自己的**属性**
+
+## 5.函数作为命名空间
+
+​	—— 函数体内声明的变量在函数外部不可见
+
+- 函数可以作为**临时命名空间**，可以保证其定义的变量不会污染全局命名空间
+
+## 6.闭包
+
+​	—— 函数对象与作用域组合起来解析函变量的机制【严格来讲，所有JS函数都是闭包】
+
+-  JS使用**词法作用域**
+- 函数执行时使用的是**定义函数时生效的变量作用域**，而不是调用函数时生效的变量作用域
+- 本质：捕获自身定义所在外部函数的局部变量（及参数）绑定
+
+<p style="color:#cd5a4b;font-size:18px">🌟 定义函数与调用函数的作用域不同时</p>
+
+- 闭包 —— 通过一系列的方法，将函数内部的变量（局部变量）转化为全局变量【将函数内部与外部连接起来的一座桥梁】
+  - 链式作用域结构：父对象的所有变量，对子对象都是可见的，反之不成立
+
+## 7.函数属性、方法、构造函数
+
+### ① length属性
+
+- 只读
+- 表示函数的元数 —— 函数声明的**形参个数**（调用函数时应该传入的参数个数）
+  - 若函数有剩余形参，那这个剩余形参不包含在length属性内
+
+### ② name属性
+
+- 只读
+- 定义时使用的名字
+  - 未命名函数 ： 第一次创建这个函数时赋给该函数的变量名或属性名
+
+- 记录调试或排错消息
+
+### ③ prototype属性
+
+除箭头函数，所有函数都有prototype属性
+
+### ④ call( )和apply( )方法
+
+- 间接调用一个函数
+- 参数
+  - 第一个参数：函数调用上下文（在函数体内会变成this关键字的值）
+  - 其余参数：传给被调用的函数作为参数
+
+- 箭头函数的this值不会被call( )和apply( )方法重写
+
+### ⑤ bind( )方法
+
+- 将函数绑定到对象（改变当前的this值）
+
+  ```js
+  function f(y) {return this.x + y;}
+  let o = {x: 1};
+  let g = f.bind(o);//将this指向o对象
+  g(2);// 3
+  let p = {x:10,g};
+  p.g(2);//3 this仍然绑定在o上，而非p上
+  ```
+
+- 箭头函数中使用bind，绑定不起作用
+
+- bind后面的参数也会随this一起被绑定 => 柯里化
+
+  ```js
+  let sum = (x,y) => x + y;
+  let succ = sum.bind(null,1);//将第一个参数x绑定为1
+  succ(2);//=> 3，先绑定到1，2会传给参数y
+  
+  function f(y,z) {return this.x + y + z; }
+  let g = f.bind({x:1},2);//将this值绑定到对象{x:1}，将参数y绑定到2
+  g(3);// => this.x绑定到1，y绑定到2,3传给参数z
+  ```
+
+### ⑥ toString( )方法
+
+### ⑦ Function( )构造函数
+
+- 可以接收任意多个字符串参数
+  - 最后一个参数：函数体
+  - 其余参数（可以没有）：函数参数名
+
+- 创建的是**匿名函数**
+- Function( )创建的函数不使用词法作用域
