@@ -279,7 +279,7 @@ class类 —— **类不会被“提升”**，因此不能在声明之前使用
 <p style="color:#cd5a4b;font-size:20px">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;🌟原型</p>
 
 ```text
-几乎每个对象都有原型，但大多数对象没有prototype属性 
+几乎每个对象都有原型，但大多数对象没有prototype属性 （只有函数对象有prototype属性）
 							—— Object.prototype是为数不多没有原型的对象，不继承任何属性
 ```
 
@@ -399,7 +399,7 @@ serialization对象序列化 【JSON（Javasrcipt Object Notation）指 JavaScri
 								函数、RegExp、Error对象、undefined
 ```
 
-# 四、数组
+# 五、数组
 
 ```text
 数组是一种基础数据类型
@@ -666,7 +666,7 @@ length属性会大于元素个数，被省略的元素是不存在的
 
 ### ③添加数组 — concat( )
 
-- 返回一个新数组，不会修改原数组
+- 【返回一个新数组】，不会修改原数组
 
   - 新数组中包含调用该方法的数组元素，也包含传入的参数
 
@@ -996,7 +996,7 @@ for(let j=0; j<a.length; j++) {
 
   如：`Array.prototype.join.call("javascript"," ");//"j a v a s c r i p t"`
 
-# 五、函数
+# 六、函数
 
 ## 1.定义函数
 
@@ -1300,3 +1300,288 @@ operate2("pow",10,2)//100
 
 - 创建的是**匿名函数**
 - Function( )创建的函数不使用词法作用域
+
+# 七、类
+
+多个对象经常需要共享一些属性，此时可以为这些对象定义一个类
+
+## 1.类和原型
+
+​	**类** —— 一组对象从同一个**原型对象**继承属性 【**类声明不会提升、块级作用域**】
+
+- 如果定义了一个原型对象，然后使用Object.create( )创建一个继承它的对象，那么我们就定义了一个JS类
+
+- 一个类的实例需要进一步初始化 —— 定义一个函数创建和初始化新对象
+
+  ```js
+  function range(from,to) {
+    //创建一个新对象
+    let r = Object.create(range.methods);
+    r.from = from;
+    r.to = to;
+   //返回新对象
+    return r;
+  }
+  
+  range.methods = {
+    includes(x) {
+      return this.from <= x && x <= this.to;
+    }
+  }
+  
+  let r = range(1,3);//创建一个范围对象
+  r.includes(2);//true
+  ```
+
+## 2. 类和构造函数
+
+构造函数constructor —— 专门用于创建和初始化由类创建的对象
+
+构造函数的**prototype属性**将被用作新对象的**原型**
+
+- 命名以大写字母开头
+
+- 以new关键字生成实例对象后，自动调用该方法
+
+  - 使用new<u>实例化Person</u>就相当于使用new<u>调用其构造函数</u>
+
+- 一个类只能拥有一个名为constructor的构造函数；如果没有则会自动创建一个空的constructor
+
+- 原型对象的命名方式：Fun.prototype —— 作为新Fun对象的原型
+
+  ```js
+  function Range(from,to) {
+    //不创建也不返回对象，只初始化this
+    this.from = from;
+    this.to = to;
+  }
+  
+  Range.prototype = {
+    includes: function(x) {return this.from <= x && x <= this.to;}
+  };
+  
+  let r = new Range(1,3);//创建一个Range对象
+  r.includes(2);//true
+  ```
+
+<p style="color:#cd5a4b;font-size:18px">🌟 使用new调用构造函数会执行如下操作</p>
+
+```text
+1.在内存中创建一个新对象
+2.这个新对象内部的[[prototype]]指针被赋值为构造函数的prototype属性
+3.构造函数内部的this被赋值为这个新对象（即this指向新对象）
+4.执行构造函数内部的代码 —— 给新对象添加属性
+5.如果构造函数返回非空对象，则返回该对象；否则，返回刚创建的新对象
+```
+
+### 构造函数、类标识、instanceof
+
+- 类标识 —— 原型对象
+  - 当且仅当两个对象继承同一个原型对象时，他们才是同一个类的实例
+
+- 类的外在表现 —— 构造函数（类的公共标识）
+  - 构造函数名字通常用作类名
+
+- instanceof  —— f instanceof Fun 
+  - 检测f是否继承Fun.protoptype
+  - 不一定是直接继承
+
+## 3.使用Class关键字的类
+
+【ES6】即基础的类定义机制的“语法糖“
+
+```text
+▫︎ Class关键字声明
+▫︎ 使用对象字面量方法简写形式，方法之间没有逗号
+▫︎ 关键字constructor用于定义类的构造函数
+  - 若类不需要任何初始化，可以省略constructor，解释器会隐式创建一个空构造函数
+```
+
+```js
+class Range {
+  constructor(from,to) {
+    this.from = from;
+    this.to = to;
+  }
+  includes(x) {return this.from <= x && x <= this.to;}
+}
+
+let r = new Range(1,3);//创建一个Range对象
+r.includes(2);//true
+```
+
+- extends —— 定义一个继承另一个类的类
+
+  ```js
+  class Span extends Range {
+    constructor(start,length) {
+      if(length >= 0) {
+        super(start,start + length);
+      } else {
+        super(start + length,start);
+      }
+    }
+  };
+  ```
+
+- class声明体中的所有代码默认处于**严格模式**
+- **类声明不会提升** —— 不能在声明类之前初始化它
+
+## 4.类的实例、原型以及类的成员
+
+### getter与setter
+
+- 在class内部使用get与set关键字，对某个属性设置存值函数和取值函数，拦截该属性的存取行为
+
+```js
+class Person {
+  constructor(test) {
+    this.test = test || '默认值';
+  }
+  get prop() {
+    return this.test;
+  }
+  set prop(value) {
+    console.log(`setter prop value:${value}`);
+    this.test = value;
+  }
+}
+const p = new Person('1');
+p.prop;//1
+p.prop = '2';//setter prop value: 2
+p.prop;//2
+```
+
+### Generator方法 （方法前加*）
+
+```js
+class Person {
+  constructor(...args) {
+    this.args = args;
+  }
+  * generatorFun() {
+    for(let arg of this.args) {
+      yield arg;
+    }
+  }
+}
+const a = new Person(1,2,3,4);
+const generatorNext = a.generatorFun().next; 
+generatorNext();//{value:1,done:false}
+generatorNext();//{value:2,done:false}
+generatorNext();//{value:3,done:false}
+generatorNext();//{value:4,done:false}
+generatorNext();//{value:undefined,done:true}
+```
+
+### this指向
+
+- 默认指向类的实例
+
+- 当找不到this，指向该方法运行时所在的环境，但class内部是严格模式，this实际指向undefined
+
+  - 解决方法① : 构造方法中绑定this
+
+    ```js
+    class Person{
+      constructor() {
+        this.text = '1';
+        this.getText = this.getText.bind(this);
+      }
+      getText() {
+        console.log(this.text);
+      }
+    }
+    ```
+
+  - 解决方法② : 使用箭头函数
+
+    ```js
+    class Person{
+      constructor() {
+        this.text = '1';
+      }
+      getText = () => {
+        console.log(this.text);
+      }
+    }
+    ```
+
+  - 解决方法③ : 使用proxy在获取方法是自动绑定this
+
+## 5.静态方法、静态属性、静态代码块
+
+使用static定义的属性，只能class自己用，不能通过实例继承
+
+- 静态方法（当前类自身属性）
+
+  —— this指向当前类，而不是实例对象
+
+- 静态代码块   static { }
+
+  —— 在class内部创建块状作用域，可以通过this访问class所有成员变量，包括#私有变量
+
+  - 按顺序执行，父类优先执行，一个类中允许多个静态代码块的出现
+  - 私有变量外部是访问不了的，但是可以通过静态代码块，就能将私有属性暴露给外部变量
+
+## 6.私有属性、私有方法
+
+—— # 只能在类的内部访问的属性和方法，外部不能访问，不可以直接通过class实例引用
+
+- 私有属性 —— 只能内部读取或写入
+- 私有方法 —— 只能内部调用，外部调用会出错
+
+## 7.为已有类添加方法
+
+基于原型的继承机制是**动态**的 —— 创建对象之后修改原型的属性，对象会继承修改后的属性
+
+## 8.子类
+
+子类构造函数通常必须调用父类构造函数才能将实例完全初始化
+
+### ① 子类与原型
+
+父类A( )与子类B( ) —— 子类B( )的实例也是父类A( )的实例
+
+- 通过B( )构造函数创建的对象会继承B.prototype属性
+
+- 创建该对象时让他继承A.prototype
+
+### ② 通过extends和super创建子类
+
+【ES6】
+
+- 子类 **extends** 父类
+
+  - 子类实例不仅会继承父类的实例方法，子类本身也继承了父类的静态方法
+
+  -  类的静态方法和属性是可以继承的，私有属性和方法是不能继承的
+
+     		—— 可以从继承的公有方法和静态方法中获取其私有属性或调用其私有方法
+
+- 在构造函数中使用**super( )**
+
+  - 子类可以通过super关键字调用**父类构造函数**或**父类中被覆盖的方法**
+
+  - 只能在继承类的constructor构造函数、实例方法、静态方法中使用
+
+  - 在constructor中super( )在顶部首段执行代码
+
+    ```text
+    ① super只能在继承类的构造函数、静态方法中使用
+    ② 不能单独引用super关键字 —— 要么用它调用构造函数、要么引用静态方法
+    ③ 调用super会调用父类构造函数，并将返回的实例赋值给this
+    ④ super()的行为如同调用构造函数，如果需要给父类构造函数传参，则需要手动传入
+    ⑤ 如果没有定义类构造函数，在实例化继承时会调用super()，而且会传入所有传给继承类的参数
+    ⑥ 在类构造函数中，不能在调用super()之前引用this
+    ⑦ 如果在继承类中显示定义了构造函数 —— 调用super()、返回一个对象
+    ```
+
+<p style="color:#cd5a4b;font-size:18px">⚠️ 注意点</p>
+
+```text
+▫︎ 如果使用extends关键字定义了一个类，那么这个类的构造函数必须使用super()调用父类构造函数
+▫︎ 如果没有在子类中定义构造函数，解释器会自动创建一个
+▫︎ 通过super()调用父构造函数之前，不能在构造函数中使用this关键字【确保父类先于子类得到初始化】
+▫︎ super关键字很像this关键字，它引用当前对象，但允许访问父类定义的被覆盖的方法
+```
