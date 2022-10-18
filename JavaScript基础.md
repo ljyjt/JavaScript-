@@ -754,7 +754,7 @@ a.unshift(1,2);//a == [1,2]
 
 - splice( ) —— 随数组进行插入和删除的通用方法 【**会修改调用它的数组**】
 
-  - 返回被删除元素的数组
+  - 返回被删除元素的数组，原数组会被改变
   - 参数
     - 第一个参数：插入或删除操作的**起点位置**，
     - 第二个参数（可选）：从数组中**删除的元素个数**，若省略，从起点位置元素开始的所有元素都删除
@@ -973,7 +973,7 @@ for(let j=0; j<a.length; j++) {
 
 - 类数组对象不会继承Array.prototype( )，因此不能直接在其上调用数组方法
 
-  - Function.call( )
+  - Array.prototype.XX.call( )
 
     ```js
     let a = {"0": "a","1": "b","2": "c",length: 3};
@@ -1585,3 +1585,198 @@ generatorNext();//{value:undefined,done:true}
 ▫︎ 通过super()调用父构造函数之前，不能在构造函数中使用this关键字【确保父类先于子类得到初始化】
 ▫︎ super关键字很像this关键字，它引用当前对象，但允许访问父类定义的被覆盖的方法
 ```
+
+# 八、模块
+
+【ES6】使用import和export关键字定义自己的模块，js模块化依赖代码打包工具
+
+## 1.基于类、对象、闭包的模块
+
+- 类 —— 充当自己方法的模块
+  - 类的方法之所以能相互独立，因为每个类的方法都被定义为独立原型对象的属性
+
+- 对象 —— 模块 （给对象添加属性不影响全局命名空间，也不影响其他对象的属性）
+
+## 2.Node中的模块
+
+编写Node程序时，可以随意将程序拆分到任意多个文件中
+
+### ① Node的导出
+
+全局**exports对象**
+
+- exports.XX 
+
+  ```js
+  exports.mean = data => data.reduce(sum)/data.length;
+  ```
+
+- module.exports = XX
+
+  ```js
+  module.exports = class BitSet extends AbstractWritableSet { }
+  ```
+
+- 在模块末尾导出一个对象 module.exports = { XX, XX }
+
+  ```js
+  const mean = data => data.reduce(sum)/data.length;
+  const stddev = d => {
+    let m = mean(d);
+    return Math.sqrt(d.map(x => x - m).map(square).reduce(sum)/(d.length-1));
+  }
+  module.exports = { mean, stddev };
+  ```
+
+ ### ② Node的导入
+
+- 调用require( )函数导入其他模块
+  - 参数 —— 要导入模块的名字
+  - 返回值 —— 该模块导出的值
+
+- 导入
+
+  - 导入**内置的系统模块**或**通过包管理器安装在系统上的模块** —— 可以使用模块的非限定名
+
+    ```js
+    //Node内置模块
+    const fs = require("fs");
+    const http = require("http");
+    
+    //第三方模块
+    const express = require("express");
+    ```
+
+  - 导入**自己代码中的模块**
+
+    - 模块名 —— 通常使用相对路径（ ./ 或 ../ 开头），表示相对于当前的目录或父目录
+
+      ```js
+      //可以省略.js后缀
+      const states = require('./states.js');
+      ```
+
+- 
+
+  - 模块只**导出一个函数或类** —— 调用require( )取得返回值
+
+  - 模块**导出一个带多个属性的对象**
+
+    - ① 导入整个对象
+
+    - ② 解构赋值，只导入打算使用的特定属性
+
+      ```js
+      const { stddev } = require('./states.js');
+      ```
+
+## 3.ES6中的模块
+
+ES6为JS添加了import和export关键字
+
+### ① ES6的导出
+
+- 导出常量、变量、函数、类，在声明前加上export关键字即可
+
+  ```js
+  //常量
+  export const PI = Math.PI;
+  //函数
+  export function fun(d) {return d * PI / 180};
+  //类
+  export class Circle {
+    constructor(r) {this.r = r};
+    area() {return PI * this.r * this.r}
+  }
+  ```
+
+- 取代多个export关键字：在模块末尾使用一个export语句 
+
+  ```js
+  export {Circle, fun, PI}//不会定义对象字面量（简化语法）
+  ```
+
+- 一个模块只**导出一个值**（函数或类） => export default
+
+  ```js
+  export default class BitSet { } //export default后面的花括号是会被导出的对象字面量
+  ```
+
+- export关键字只能出现在**代码顶层**，不能再类、函数、循环、条件内部导出值
+
+### ② ES6的导入
+
+- import关键字只能出现在**代码顶层**，不能再类、函数、循环、条件内部导出值
+
+- 一个模块所需的导入应该放在模块的开头 —— **模块的导入会被“提升”到顶部**
+
+- 模块标识符字符串必须是一个以 **/** 开头的绝对路径，或是以 **./** 或 **../** 开头的相对路径
+
+- 导入
+
+  - import**导入默认导出的模块**（导入一个）
+
+    ```js
+    import BitSet from './bitset.js';
+    ```
+
+  - 导入多个值 —— 使用{ }，会被提升到模块顶部
+
+    ```js
+    import { mean, stddev } from './states.js';
+    ```
+
+- 
+
+  - 默认导出的模块导出时不需要名字，在导入这些值时可以再提供一个局部名
+
+  - 非默认导出的模块导出时又名字，在导入这些值时可以通过名字引用
+
+  - 导入**没有任何导出的模块 ** —— 会在被首次导入时运行一次（时候导入时则什么也不做）
+
+    ```js
+    import './analytics.js';
+    ```
+
+### ③ 导入和导出时重命名
+
+as关键字
+
+- 导入
+
+```js
+import {render as renderImage} from './imageutils.js';
+import {render as renderUI} from './ui.js';
+```
+
+- 导入默认导出的没有名字的模块（用default充当一个占位符）
+
+  ```js
+  import { default as Histogram, mean, stddev } from './histogram-stats.js';
+  ```
+
+- 导出
+
+  - as前是一个**标识符**，而非表达式
+
+    ```js
+    export {Math.sin as sin};//SyntaxError
+    ```
+
+### ④ 再导出
+
+导入真正要用的函数，而不会因导入不需要的代码造成体积膨胀
+
+```js
+export { mean } from './stats/mean.js';
+export {stddev } from './stats/stddev.js';
+```
+
+- 导出一个模块中的所有命名值
+
+  ```js
+  export * from './stats/mean.js';
+  ```
+
+- 可以用as重命名
+
